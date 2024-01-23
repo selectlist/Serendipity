@@ -54,9 +54,12 @@ const Claim = async (
 		);
 	else {
 		try {
-			await database.Bots.update(botid, {
-				state: "CLAIMED",
+			let bot = await database.Bots.get({
+				botid: botid,
 			});
+			bot.state = "CLAIMED";
+
+			await database.Bots.update(botid, bot);
 
 			await logAction("CLAIMED", "Bot claimed.", userid, botid);
 
@@ -79,9 +82,12 @@ const Unclaim = async (
 		);
 	else {
 		try {
-			await database.Bots.update(botid, {
-				state: "PENDING",
+			let bot = await database.Bots.get({
+				botid: botid,
 			});
+			bot.state = "PENDING";
+
+			await database.Bots.update(botid, bot);
 
 			await logAction("UNCLAIMED", reason, userid, botid);
 
@@ -105,9 +111,12 @@ const Approve = async (
 		);
 	else {
 		try {
-			await database.Bots.update(botid, {
-				state: "APPROVED",
+			let bot = await database.Bots.get({
+				botid: botid,
 			});
+			bot.state = "APPROVED";
+
+			await database.Bots.update(botid, bot);
 
 			await logAction("APPROVED", reason, userid, botid);
 
@@ -131,9 +140,12 @@ const Deny = async (
 		);
 	else {
 		try {
-			await database.Bots.update(botid, {
-				state: "DENIED",
+			let bot = await database.Bots.get({
+				botid: botid,
 			});
+			bot.state = "DENIED";
+
+			await database.Bots.update(botid, bot);
 
 			await logAction("DENIED", reason, userid, botid);
 
@@ -157,9 +169,12 @@ const Ban = async (
 		);
 	else {
 		try {
-			await database.Bots.update(botid, {
-				state: "BANNED",
+			let bot = await database.Bots.get({
+				botid: botid,
 			});
+			bot.state = "BANNED";
+
+			await database.Bots.update(botid, bot);
 
 			await logAction("BANNED", reason, userid, botid);
 
