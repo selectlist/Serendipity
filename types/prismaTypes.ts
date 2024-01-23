@@ -9,6 +9,7 @@ export enum botstatus {
 }
 
 export enum botstate {
+	CLAIMED = "CLAIMED",
 	APPROVED = "APPROVED",
 	DENIED = "DENIED",
 	PENDING = "PENDING",
@@ -16,10 +17,12 @@ export enum botstate {
 }
 
 export enum botaction {
-	APPROVE = "APPROVE",
-	DENY = "DENY",
-	BAN = "BAN",
-	VOTE_BAN = "VOTE_BAN",
+	CLAIMED = "CLAIMED",
+	UNCLAIMED = "UNCLAIMED",
+	APPROVED = "APPROVED",
+	DENIED = "DENIED",
+	BANNED = "BANNED",
+	VOTE_BANNED = "VOTE_BANNED",
 	OTHER = "OTHER",
 }
 
@@ -47,6 +50,7 @@ export interface discordbots {
 	name: string;
 	description: string;
 	longdescription: string;
+	avatar: string;
 	status: botstatus;
 	state: botstate;
 	auditlogs: botaudits[];

@@ -85,7 +85,7 @@ class Bots {
 		}
 	}
 
-	static async update(id: string, data: discordbots) {
+	static async update(id: string, data: object) {
 		try {
 			await Prisma.discordbots.update({
 				where: {
