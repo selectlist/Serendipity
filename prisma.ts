@@ -1,5 +1,6 @@
 // Modules
 import { PrismaClient, discordbots, users } from "@prisma/client";
+import getUserData from "./dovewing.js";
 const Prisma = new PrismaClient();
 
 // Users
@@ -32,7 +33,7 @@ class Users {
 	}
 
 	static async get(data: any) {
-		const doc = await Prisma.users.findUnique({
+		let doc = await Prisma.users.findUnique({
 			where: data,
 			include: {
 				discordbots: true,
@@ -40,12 +41,41 @@ class Users {
 			},
 		});
 
+		const cache = await getUserData(doc.userid);
 		if (!doc) return null;
-		else return doc;
+		else {
+			doc.discordbots.map(async (p) => await getUserData(p.botid));
+
+			if (cache === true) return doc;
+			else {
+				doc = await Prisma.users.findUnique({
+					where: data,
+					include: {
+						discordbots: true,
+						botcomments: false,
+					},
+				});
+
+				return doc;
+			}
+		}
 	}
 
 	static async find(data: any) {
-		const docs = await Prisma.users.findMany({
+		let docs = await Prisma.users.findMany({
+			where: data,
+			include: {
+				discordbots: true,
+				botcomments: false,
+			},
+		});
+
+		docs.map(async (p) => {
+			await getUserData(p.userid);
+			p.discordbots.map(async (i) => await getUserData(i.botid));
+		});
+
+		docs = await Prisma.users.findMany({
 			where: data,
 			include: {
 				discordbots: true,
@@ -101,7 +131,7 @@ class Bots {
 	}
 
 	static async get(data: any) {
-		const doc = await Prisma.discordbots.findUnique({
+		let doc = await Prisma.discordbots.findUnique({
 			where: data,
 			include: {
 				owner: true,
@@ -110,11 +140,40 @@ class Bots {
 		});
 
 		if (!doc) return null;
-		else return doc;
+		else {
+			const cache = await getUserData(doc.botid);
+			await getUserData(doc.owner.userid);
+
+			if (cache === true) return doc;
+			else {
+				doc = await Prisma.discordbots.findUnique({
+					where: data,
+					include: {
+						owner: true,
+						comments: true,
+					},
+				});
+
+				return doc;
+			}
+		}
 	}
 
 	static async find(data: any) {
-		const docs = await Prisma.discordbots.findMany({
+		let docs = await Prisma.discordbots.findMany({
+			where: data,
+			include: {
+				owner: true,
+				comments: true,
+			},
+		});
+
+		docs.map(async (p) => {
+			await getUserData(p.botid);
+			await getUserData(p.owner.userid);
+		});
+
+		docs = await Prisma.discordbots.findMany({
 			where: data,
 			include: {
 				owner: true,
