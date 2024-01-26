@@ -1,5 +1,6 @@
 // Modules
 import { PrismaClient, discordbots, users } from "@prisma/client";
+import getUserData from "./dovewing.js";
 const Prisma = new PrismaClient();
 
 // Users
@@ -40,8 +41,25 @@ class Users {
 			},
 		});
 
+		const cache = await getUserData(doc.userid);
+
 		if (!doc) return null;
-		else return doc;
+		else {
+			doc.discordbots.map(async (p) => await getUserData(p.botid));
+
+			if (cache === true) return doc;
+			else {
+				const diff = await Prisma.users.findUnique({
+					where: data,
+					include: {
+						discordbots: true,
+						botcomments: false,
+					},
+				});
+
+				return diff;
+			}
+		}
 	}
 
 	static async find(data: any) {
@@ -110,7 +128,23 @@ class Bots {
 		});
 
 		if (!doc) return null;
-		else return doc;
+		else {
+			const cache = await getUserData(doc.botid);
+			await getUserData(doc.owner.userid);
+
+			if (cache === true) return doc;
+			else {
+				const diff = await Prisma.discordbots.findUnique({
+					where: data,
+					include: {
+						owner: true,
+						comments: true,
+					},
+				});
+
+				return diff;
+			}
+		}
 	}
 
 	static async find(data: any) {
@@ -122,7 +156,20 @@ class Bots {
 			},
 		});
 
-		return docs;
+		docs.map(async (p) => {
+			await getUserData(p.botid);
+			await getUserData(p.owner.userid);
+		});
+
+		const diff = await Prisma.discordbots.findMany({
+			where: data,
+			include: {
+				owner: true,
+				comments: true,
+			},
+		});
+
+		return diff;
 	}
 
 	static async delete(botid: string) {
