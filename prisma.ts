@@ -33,7 +33,7 @@ class Users {
 	}
 
 	static async get(data: any) {
-		let doc = await Prisma.users.findUnique({
+		const doc = await Prisma.users.findUnique({
 			where: data,
 			include: {
 				discordbots: true,
@@ -42,13 +42,14 @@ class Users {
 		});
 
 		const cache = await getUserData(doc.userid);
+
 		if (!doc) return null;
 		else {
 			doc.discordbots.map(async (p) => await getUserData(p.botid));
 
 			if (cache === true) return doc;
 			else {
-				doc = await Prisma.users.findUnique({
+				const diff = await Prisma.users.findUnique({
 					where: data,
 					include: {
 						discordbots: true,
@@ -56,26 +57,13 @@ class Users {
 					},
 				});
 
-				return doc;
+				return diff;
 			}
 		}
 	}
 
 	static async find(data: any) {
-		let docs = await Prisma.users.findMany({
-			where: data,
-			include: {
-				discordbots: true,
-				botcomments: false,
-			},
-		});
-
-		docs.map(async (p) => {
-			await getUserData(p.userid);
-			p.discordbots.map(async (i) => await getUserData(i.botid));
-		});
-
-		docs = await Prisma.users.findMany({
+		const docs = await Prisma.users.findMany({
 			where: data,
 			include: {
 				discordbots: true,
@@ -131,7 +119,7 @@ class Bots {
 	}
 
 	static async get(data: any) {
-		let doc = await Prisma.discordbots.findUnique({
+		const doc = await Prisma.discordbots.findUnique({
 			where: data,
 			include: {
 				owner: true,
@@ -146,7 +134,7 @@ class Bots {
 
 			if (cache === true) return doc;
 			else {
-				doc = await Prisma.discordbots.findUnique({
+				const diff = await Prisma.discordbots.findUnique({
 					where: data,
 					include: {
 						owner: true,
@@ -154,13 +142,13 @@ class Bots {
 					},
 				});
 
-				return doc;
+				return diff;
 			}
 		}
 	}
 
 	static async find(data: any) {
-		let docs = await Prisma.discordbots.findMany({
+		const docs = await Prisma.discordbots.findMany({
 			where: data,
 			include: {
 				owner: true,
@@ -173,7 +161,7 @@ class Bots {
 			await getUserData(p.owner.userid);
 		});
 
-		docs = await Prisma.discordbots.findMany({
+		const diff = await Prisma.discordbots.findMany({
 			where: data,
 			include: {
 				owner: true,
@@ -181,7 +169,7 @@ class Bots {
 			},
 		});
 
-		return docs;
+		return diff;
 	}
 
 	static async delete(botid: string) {

@@ -1,6 +1,6 @@
 import { botaction } from "@prisma/client";
 import { hasPerm } from "../perms.js";
-import { WebhookClient } from "discord.js";
+import { EmbedBuilder, WebhookClient } from "discord.js";
 import * as database from "./prisma.js";
 
 const checkPerms = async (userid: string, perm: string) => {
@@ -28,13 +28,52 @@ const logAction = async (
 			},
 		});
 
+		const bot = await database.Bots.get({
+			botid: botid,
+		});
+
+		const staffMember = await database.Users.get({
+			userid: userid,
+		});
+
 		const webhookClient = new WebhookClient({
 			id: process.env.DISCORD_LOG_CHANNEL,
 			token: process.env.DISCORD_LOG_CHANNEL_TOKEN,
 		});
 
 		webhookClient.send({
-			content: `<@${userid}> has ${action.toLowerCase()} <@${botid}>.\n\nReason: ${reason}`,
+			content: `<@${bot.owner.userid}>`,
+			embeds: [
+				new EmbedBuilder()
+					.setTitle(`Bot ${action.toLowerCase()}`)
+					.setColor("Random")
+					.setAuthor({
+						name: staffMember.username,
+						iconURL: staffMember.avatar,
+					})
+					.setThumbnail(bot.avatar)
+					.addFields(
+						{
+							name: "Bot",
+							value: `${bot.name} [${botid}]`,
+							inline: true,
+						},
+						{
+							name: "Action",
+							value: action.toLowerCase(),
+							inline: true,
+						},
+						{
+							name: "Reason",
+							value: reason,
+							inline: true,
+						}
+					)
+					.setFooter({
+						text: `Thank you for using Select List!`,
+						iconURL: "https://select-list.xyz/logo.png",
+					}),
+			],
 		});
 
 		return true;
@@ -54,8 +93,10 @@ const Claim = async (
 		);
 	else {
 		try {
-			let bot = await database.Bots.get({
-				botid: botid,
+			let bot = await database.Prisma.discordbots.findUnique({
+				where: {
+					botid: botid,
+				},
 			});
 			bot.state = "CLAIMED";
 
@@ -82,8 +123,10 @@ const Unclaim = async (
 		);
 	else {
 		try {
-			let bot = await database.Bots.get({
-				botid: botid,
+			let bot = await database.Prisma.discordbots.findUnique({
+				where: {
+					botid: botid,
+				},
 			});
 			bot.state = "PENDING";
 
@@ -111,8 +154,10 @@ const Approve = async (
 		);
 	else {
 		try {
-			let bot = await database.Bots.get({
-				botid: botid,
+			let bot = await database.Prisma.discordbots.findUnique({
+				where: {
+					botid: botid,
+				},
 			});
 			bot.state = "APPROVED";
 
@@ -140,8 +185,10 @@ const Deny = async (
 		);
 	else {
 		try {
-			let bot = await database.Bots.get({
-				botid: botid,
+			let bot = await database.Prisma.discordbots.findUnique({
+				where: {
+					botid: botid,
+				},
 			});
 			bot.state = "DENIED";
 
@@ -169,8 +216,10 @@ const Ban = async (
 		);
 	else {
 		try {
-			let bot = await database.Bots.get({
-				botid: botid,
+			let bot = await database.Prisma.discordbots.findUnique({
+				where: {
+					botid: botid,
+				},
 			});
 			bot.state = "BANNED";
 
