@@ -31,12 +31,20 @@ model botcomments {
 }
 
 model discordbots {
-  botid           String    @id @unique @db.VarChar(255)
-  name            String    @db.VarChar(255)
+  botid  String  @id @unique @db.VarChar(255)
+  name   String  @db.VarChar(255)
+  avatar String  @default("/logo.png") @db.VarChar(255)
+  invite String? @unique
+  apiKey String? @unique
+
   description     String
   longdescription String
-  avatar    String   @default("/logo.png") @db.VarChar(255)
-  status          botstatus
+
+  servers Int @default(0)
+  shards  Int @default(0)
+  users   Int @default(0)
+
+  claimedBy String?
 
   state     botstate
   auditlogs botaudits[]
@@ -50,23 +58,16 @@ model discordbots {
 }
 
 model users {
-  username    String? @db.VarChar(255)
-  userid  String  @id @unique @db.VarChar(255)
+  username String? @db.VarChar(255)
+  userid   String  @id @unique @db.VarChar(255)
 
-  bio       String   @default("i exist now. yes.") @db.VarChar(255)
-  avatar    String   @default("/logo.png") @db.VarChar(255)
-  badges    String[]
+  bio         String   @default("i exist now. yes.") @db.VarChar(255)
+  avatar      String   @default("/logo.png") @db.VarChar(255)
+  badges      String[]
   staff_perms String[] @default([])
 
   discordbots discordbots[]
   botcomments botcomments[]
-}
-
-enum botstatus {
-  ONLINE
-  IDLE
-  DND
-  OFFLINE
 }
 
 enum botstate {
