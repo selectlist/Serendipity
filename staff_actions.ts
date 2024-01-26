@@ -99,9 +99,9 @@ const Claim = async (
 				},
 			});
 			bot.state = "CLAIMED";
+            bot.claimedBy = userid;
 
 			await database.Bots.update(botid, bot);
-
 			await logAction("CLAIMED", "Bot claimed.", userid, botid);
 
 			return true;
@@ -129,9 +129,9 @@ const Unclaim = async (
 				},
 			});
 			bot.state = "PENDING";
+            bot.claimedBy = null;
 
 			await database.Bots.update(botid, bot);
-
 			await logAction("UNCLAIMED", reason, userid, botid);
 
 			return true;
@@ -160,9 +160,9 @@ const Approve = async (
 				},
 			});
 			bot.state = "APPROVED";
+            bot.claimedBy = null;
 
 			await database.Bots.update(botid, bot);
-
 			await logAction("APPROVED", reason, userid, botid);
 
 			return true;
@@ -191,9 +191,9 @@ const Deny = async (
 				},
 			});
 			bot.state = "DENIED";
+            bot.claimedBy = null;
 
 			await database.Bots.update(botid, bot);
-
 			await logAction("DENIED", reason, userid, botid);
 
 			return true;
@@ -222,9 +222,9 @@ const Ban = async (
 				},
 			});
 			bot.state = "BANNED";
-
+            bot.claimedBy = null;
+            
 			await database.Bots.update(botid, bot);
-
 			await logAction("BANNED", reason, userid, botid);
 
 			return true;
