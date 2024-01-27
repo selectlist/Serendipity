@@ -52,7 +52,7 @@ const getUserData = async (userid: Snowflake): Promise<boolean> => {
 		)) as RESTGetAPIUserResult;
 
 		if (apiUserData.bot) {
-			let botData = await database.Prisma.discordbots.findUnique({
+			let botData = await database.Prisma.discord_bots.findUnique({
 				where: {
 					botid: apiUserData.id,
 				},
@@ -65,7 +65,7 @@ const getUserData = async (userid: Snowflake): Promise<boolean> => {
 			botData.name = apiUserData.username;
 			botData.avatar = `https://cdn.discordapp.com/avatars/${userid}/${apiUserData.avatar}.png`;
 
-			await database.Bots.update(userid, botData);
+			await database.Discord.update(userid, botData);
 			await setCache(userid, JSON.stringify(apiUserData));
 
 			return false;
@@ -75,8 +75,8 @@ const getUserData = async (userid: Snowflake): Promise<boolean> => {
 					userid: apiUserData.id,
 				},
 				include: {
-					discordbots: false,
-					botcomments: false,
+					discord: false,
+					discord_comments: false,
 				},
 			});
 
