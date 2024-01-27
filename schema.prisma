@@ -11,6 +11,7 @@ datasource db {
 model users {
   username String? @db.VarChar(255)
   userid   String  @id @unique @db.VarChar(255)
+  revoltid String? @unique @db.VarChar(255)
 
   bio         String   @default("i exist now. yes.") @db.VarChar(255)
   avatar      String   @default("/logo.png") @db.VarChar(255)
@@ -75,7 +76,7 @@ model revolt_bots {
   comments  revolt_comments[]
 
   ownerid String
-  owner   users  @relation(fields: [ownerid], references: [userid])
+  owner   users  @relation(fields: [ownerid], references: [revoltid])
 }
 
 // Foreign Tables
@@ -116,7 +117,7 @@ model revolt_comments {
   commentid String @id @unique @db.VarChar(255)
 
   creatorid String @db.VarChar(255)
-  user      users  @relation(fields: [creatorid], references: [userid])
+  user      users  @relation(fields: [creatorid], references: [revoltid])
 
   bot   revolt_bots @relation(fields: [botid], references: [botid])
   botid String      @db.VarChar(255)

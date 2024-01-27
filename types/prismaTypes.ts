@@ -1,13 +1,6 @@
 // AUTO GENERATED FILE BY @kalissaac/prisma-typegen
 // DO NOT EDIT
 
-export enum botstatus {
-	ONLINE = "ONLINE",
-	IDLE = "IDLE",
-	DND = "DND",
-	OFFLINE = "OFFLINE",
-}
-
 export enum botstate {
 	CLAIMED = "CLAIMED",
 	APPROVED = "APPROVED",
@@ -26,48 +19,96 @@ export enum botaction {
 	OTHER = "OTHER",
 }
 
-export interface botaudits {
+export interface users {
+	username?: string;
+	userid: string;
+	revoltid?: string;
+	bio: string;
+	avatar: string;
+	badges: string[];
+	staff_perms: string[];
+	discord: discord_bots[];
+	discord_comments: discord_comments[];
+	revolt: revolt_bots[];
+	revolt_comments: revolt_comments[];
+}
+
+export interface discord_bots {
+	botid: string;
+	name: string;
+	avatar: string;
+	invite?: string;
+	apiKey?: string;
+	description: string;
+	longdescription: string;
+	servers: number;
+	shards: number;
+	users: number;
+	claimedBy?: string;
+	state: botstate;
+	auditlogs: discord_audits[];
+	upvotes: string[];
+	downvotes: string[];
+	comments: discord_comments[];
+	ownerid: string;
+	owner: users;
+}
+
+export interface revolt_bots {
+	botid: string;
+	name: string;
+	avatar: string;
+	invite?: string;
+	apiKey?: string;
+	description: string;
+	longdescription: string;
+	servers: number;
+	shards: number;
+	users: number;
+	claimedBy?: string;
+	state: botstate;
+	auditlogs: revolt_audits[];
+	upvotes: string[];
+	downvotes: string[];
+	comments: revolt_comments[];
+	ownerid: string;
+	owner: users;
+}
+
+export interface discord_audits {
 	id: number;
 	botid: string;
-	bot: discordbots;
+	bot: discord_bots;
 	staffid: string;
 	action: botaction;
 	reason: string;
 }
 
-export interface botcomments {
+export interface discord_comments {
 	commentid: string;
 	creatorid: string;
 	user: users;
-	bot: discordbots;
+	bot: discord_bots;
 	botid: string;
 	caption: string;
 	image?: string;
 }
 
-export interface discordbots {
+export interface revolt_audits {
+	id: number;
 	botid: string;
-	name: string;
-	description: string;
-	longdescription: string;
-	avatar: string;
-	status: botstatus;
-	state: botstate;
-	auditlogs: botaudits[];
-	upvotes: string[];
-	downvotes: string[];
-	comments: botcomments[];
-	ownerid: string;
-	owner: users;
+	bot: revolt_bots;
+	staffid: string;
+	action: botaction;
+	reason: string;
 }
 
-export interface users {
-	username?: string;
-	userid: string;
-	bio: string;
-	avatar: string;
-	badges: string[];
-	staff_perms: string[];
-	discordbots: discordbots[];
-	botcomments: botcomments[];
+export interface revolt_comments {
+	commentid: string;
+	creatorid: string;
+	user: users;
+	bot: revolt_bots;
+	botid: string;
+	caption: string;
+	image?: string;
 }
