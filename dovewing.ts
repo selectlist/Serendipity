@@ -79,8 +79,8 @@ const getDiscordUser = async (userid: Snowflake): Promise<boolean> => {
 					discord: false,
 					discord_comments: false,
 
-                    revolt: false,
-                    revolt_comments: false
+					revolt: false,
+					revolt_comments: false,
 				},
 			});
 
@@ -100,8 +100,8 @@ const getRevoltUser = async (userid: string): Promise<boolean> => {
 
 	if (cache) return true;
 	else {
-        const revoltClient: Client = new Client();
-        revoltClient.loginBot(process.env.REVOLT_TOKEN);
+		const revoltClient: Client = new Client();
+		revoltClient.loginBot(process.env.REVOLT_TOKEN);
 
 		const apiUserData = await revoltClient.users.fetch(userid);
 
@@ -132,8 +132,8 @@ const getRevoltUser = async (userid: string): Promise<boolean> => {
 					discord: false,
 					discord_comments: false,
 
-                    revolt: false,
-                    revolt_comments: false
+					revolt: false,
+					revolt_comments: false,
 				},
 			});
 
@@ -149,7 +149,4 @@ const getRevoltUser = async (userid: string): Promise<boolean> => {
 };
 
 // Export Function
-export {
-    getDiscordUser,
-    getRevoltUser
-};
+export { getDiscordUser, getRevoltUser };
