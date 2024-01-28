@@ -6,6 +6,7 @@ import { Routes } from "discord-api-types/v9";
 import type { RESTGetAPIUserResult, Snowflake } from "discord-api-types/v9";
 import { Client } from "revolt.js";
 import * as dotenv from "dotenv";
+import { info } from "../logger.js";
 
 // Configure dotenv
 dotenv.config();
@@ -21,6 +22,11 @@ const client = redis.createClient({
 });
 
 client.connect();
+
+// Create a Revolt Chat client
+const revoltClient: Client = new Client();
+revoltClient.loginBot(process.env.REVOLT_TOKEN);
+revoltClient.on("ready", async () => info("Revolt (Dovewing)", "Ready!"));
 
 // Cache Manager
 const setCache = async (key: string, value: any): Promise<boolean> => {
@@ -67,7 +73,7 @@ const getDiscordUser = async (userid: Snowflake): Promise<boolean> => {
 			botData.avatar = `https://cdn.discordapp.com/avatars/${userid}/${apiUserData.avatar}.png`;
 
 			await database.Discord.update(userid, botData);
-			await setCache(userid, JSON.stringify(apiUserData));
+			await setCache(userid, JSON.stringify(botData));
 
 			return false;
 		} else {
@@ -88,7 +94,7 @@ const getDiscordUser = async (userid: Snowflake): Promise<boolean> => {
 			userData.avatar = `https://cdn.discordapp.com/avatars/${userid}/${apiUserData.avatar}.png`;
 
 			await database.Users.update(userid, userData);
-			await setCache(userid, JSON.stringify(apiUserData));
+			await setCache(userid, JSON.stringify(userData));
 
 			return false;
 		}
@@ -100,51 +106,29 @@ const getRevoltUser = async (userid: string): Promise<boolean> => {
 
 	if (cache) return true;
 	else {
-		const revoltClient: Client = new Client();
-		revoltClient.loginBot(process.env.REVOLT_TOKEN);
+		let d = await revoltClient.users.fetch(userid).then(async (p) => {
+			if (p.bot) {
+				let botData = await database.Prisma.revolt_bots.findUnique({
+					where: {
+						botid: p.id,
+					},
+					include: {
+						owner: false,
+						comments: false,
+					},
+				});
 
-		const apiUserData = await revoltClient.users.fetch(userid);
+				botData.name = p.username;
+				botData.avatar = p.avatarURL;
 
-		if (apiUserData.bot) {
-			let botData = await database.Prisma.revolt_bots.findUnique({
-				where: {
-					botid: apiUserData.id,
-				},
-				include: {
-					owner: false,
-					comments: false,
-				},
-			});
+				await database.Revolt.update(userid, botData);
+				await setCache(userid, JSON.stringify(botData));
 
-			botData.name = apiUserData.username;
-			botData.avatar = apiUserData.avatarURL;
+				return false;
+			}
+		});
 
-			await database.Discord.update(userid, botData);
-			await setCache(userid, JSON.stringify(apiUserData));
-
-			return false;
-		} else {
-			let userData = await database.Prisma.users.findUnique({
-				where: {
-					userid: apiUserData.id,
-				},
-				include: {
-					discord: false,
-					discord_comments: false,
-
-					revolt: false,
-					revolt_comments: false,
-				},
-			});
-
-			userData.username = apiUserData.username;
-			userData.avatar = apiUserData.avatarURL;
-
-			await database.Users.update(userid, userData);
-			await setCache(userid, JSON.stringify(apiUserData));
-
-			return false;
-		}
+		return d;
 	}
 };
 

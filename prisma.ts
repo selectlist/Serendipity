@@ -260,7 +260,7 @@ class Revolt {
 		if (!doc) return null;
 		else {
 			const cache = await getRevoltUser(doc.botid);
-			await getRevoltUser(doc.owner.userid);
+			await getDiscordUser(doc.owner.userid);
 
 			if (cache === true) return doc;
 			else {
@@ -288,7 +288,7 @@ class Revolt {
 
 		docs.map(async (p) => {
 			await getRevoltUser(p.botid);
-			await getRevoltUser(p.owner.userid);
+			await getDiscordUser(p.owner.userid);
 		});
 
 		const diff = await Prisma.revolt_bots.findMany({
