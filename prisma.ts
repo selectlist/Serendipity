@@ -1,6 +1,6 @@
 // Modules
 import { PrismaClient, discord_bots, revolt_bots, users } from "@prisma/client";
-import getUserData from "./dovewing.js";
+import { getDiscordUser, getRevoltUser } from "./dovewing.js";
 const Prisma = new PrismaClient();
 
 // Users
@@ -44,11 +44,11 @@ class Users {
 			},
 		});
 
-		const cache = await getUserData(doc.userid);
+		const cache = await getDiscordUser(doc.userid);
 
 		if (!doc) return null;
 		else {
-			doc.discord.map(async (p) => await getUserData(p.botid));
+			doc.discord.map(async (p) => await getDiscordUser(p.botid));
 
 			if (cache === true) return doc;
 			else {
@@ -138,8 +138,8 @@ class Discord {
 
 		if (!doc) return null;
 		else {
-			const cache = await getUserData(doc.botid);
-			await getUserData(doc.owner.userid);
+			const cache = await getDiscordUser(doc.botid);
+			await getDiscordUser(doc.owner.userid);
 
 			if (cache === true) return doc;
 			else {
@@ -166,8 +166,8 @@ class Discord {
 		});
 
 		docs.map(async (p) => {
-			await getUserData(p.botid);
-			await getUserData(p.owner.userid);
+			await getDiscordUser(p.botid);
+			await getDiscordUser(p.owner.userid);
 		});
 
 		const diff = await Prisma.discord_bots.findMany({
@@ -259,8 +259,8 @@ class Revolt {
 
 		if (!doc) return null;
 		else {
-			const cache = await getUserData(doc.botid);
-			await getUserData(doc.owner.userid);
+			const cache = await getRevoltUser(doc.botid);
+			await getRevoltUser(doc.owner.userid);
 
 			if (cache === true) return doc;
 			else {
@@ -287,8 +287,8 @@ class Revolt {
 		});
 
 		docs.map(async (p) => {
-			await getUserData(p.botid);
-			await getUserData(p.owner.userid);
+			await getRevoltUser(p.botid);
+			await getRevoltUser(p.owner.userid);
 		});
 
 		const diff = await Prisma.revolt_bots.findMany({
