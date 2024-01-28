@@ -1,6 +1,6 @@
 // Modules
-import { PrismaClient, discordbots, users } from "@prisma/client";
-import getUserData from "./dovewing.js";
+import { PrismaClient, discord_bots, revolt_bots, users } from "@prisma/client";
+import { getDiscordUser, getRevoltUser } from "./dovewing.js";
 const Prisma = new PrismaClient();
 
 // Users
@@ -36,24 +36,30 @@ class Users {
 		const doc = await Prisma.users.findUnique({
 			where: data,
 			include: {
-				discordbots: true,
-				botcomments: false,
+				discord: true,
+				revolt: true,
+
+				discord_comments: false,
+				revolt_comments: false,
 			},
 		});
 
-		const cache = await getUserData(doc.userid);
+		const cache = await getDiscordUser(doc.userid);
 
 		if (!doc) return null;
 		else {
-			doc.discordbots.map(async (p) => await getUserData(p.botid));
+			doc.discord.map(async (p) => await getDiscordUser(p.botid));
 
 			if (cache === true) return doc;
 			else {
 				const diff = await Prisma.users.findUnique({
 					where: data,
 					include: {
-						discordbots: true,
-						botcomments: false,
+						discord: true,
+						revolt: true,
+
+						discord_comments: false,
+						revolt_comments: false,
 					},
 				});
 
@@ -66,8 +72,11 @@ class Users {
 		const docs = await Prisma.users.findMany({
 			where: data,
 			include: {
-				discordbots: true,
-				botcomments: false,
+				discord: true,
+				revolt: true,
+
+				discord_comments: false,
+				revolt_comments: false,
 			},
 		});
 
@@ -89,11 +98,11 @@ class Users {
 	}
 }
 
-// Bots
-class Bots {
-	static async create(data: discordbots) {
+// Discord Bots
+class Discord {
+	static async create(data: discord_bots) {
 		try {
-			await Prisma.discordbots.create({
+			await Prisma.discord_bots.create({
 				data: data,
 			});
 
@@ -103,9 +112,9 @@ class Bots {
 		}
 	}
 
-	static async update(id: string, data: discordbots) {
+	static async update(id: string, data: discord_bots) {
 		try {
-			await Prisma.discordbots.update({
+			await Prisma.discord_bots.update({
 				where: {
 					botid: id,
 				},
@@ -119,7 +128,7 @@ class Bots {
 	}
 
 	static async get(data: any) {
-		const doc = await Prisma.discordbots.findUnique({
+		const doc = await Prisma.discord_bots.findUnique({
 			where: data,
 			include: {
 				owner: true,
@@ -129,12 +138,12 @@ class Bots {
 
 		if (!doc) return null;
 		else {
-			const cache = await getUserData(doc.botid);
-			await getUserData(doc.owner.userid);
+			const cache = await getDiscordUser(doc.botid);
+			await getDiscordUser(doc.owner.userid);
 
 			if (cache === true) return doc;
 			else {
-				const diff = await Prisma.discordbots.findUnique({
+				const diff = await Prisma.discord_bots.findUnique({
 					where: data,
 					include: {
 						owner: true,
@@ -148,7 +157,7 @@ class Bots {
 	}
 
 	static async find(data: any) {
-		const docs = await Prisma.discordbots.findMany({
+		const docs = await Prisma.discord_bots.findMany({
 			where: data,
 			include: {
 				owner: true,
@@ -157,11 +166,11 @@ class Bots {
 		});
 
 		docs.map(async (p) => {
-			await getUserData(p.botid);
-			await getUserData(p.owner.userid);
+			await getDiscordUser(p.botid);
+			await getDiscordUser(p.owner.userid);
 		});
 
-		const diff = await Prisma.discordbots.findMany({
+		const diff = await Prisma.discord_bots.findMany({
 			where: data,
 			include: {
 				owner: true,
@@ -174,7 +183,7 @@ class Bots {
 
 	static async delete(botid: string) {
 		try {
-			await Prisma.discordbots.delete({
+			await Prisma.discord_bots.delete({
 				where: {
 					botid: botid,
 				},
@@ -193,7 +202,128 @@ class Bots {
 		Image: string
 	) {
 		try {
-			await Prisma.botcomments.create({
+			await Prisma.discord_comments.create({
+				data: {
+					botid: BotID,
+					commentid: crypto.randomUUID().toString(),
+					creatorid: UserID,
+					caption: Caption,
+					image: Image,
+				},
+			});
+
+			return true;
+		} catch (err) {
+			return err;
+		}
+	}
+}
+
+// Revolt Bots
+class Revolt {
+	static async create(data: revolt_bots) {
+		try {
+			await Prisma.revolt_bots.create({
+				data: data,
+			});
+
+			return true;
+		} catch (error) {
+			return error;
+		}
+	}
+
+	static async update(id: string, data: revolt_bots) {
+		try {
+			await Prisma.revolt_bots.update({
+				where: {
+					botid: id,
+				},
+				data: data,
+			});
+
+			return true;
+		} catch (err) {
+			return err;
+		}
+	}
+
+	static async get(data: any) {
+		const doc = await Prisma.revolt_bots.findUnique({
+			where: data,
+			include: {
+				owner: true,
+				comments: true,
+			},
+		});
+
+		if (!doc) return null;
+		else {
+			const cache = await getRevoltUser(doc.botid);
+			await getRevoltUser(doc.owner.userid);
+
+			if (cache === true) return doc;
+			else {
+				const diff = await Prisma.revolt_bots.findUnique({
+					where: data,
+					include: {
+						owner: true,
+						comments: true,
+					},
+				});
+
+				return diff;
+			}
+		}
+	}
+
+	static async find(data: any) {
+		const docs = await Prisma.revolt_bots.findMany({
+			where: data,
+			include: {
+				owner: true,
+				comments: true,
+			},
+		});
+
+		docs.map(async (p) => {
+			await getRevoltUser(p.botid);
+			await getRevoltUser(p.owner.userid);
+		});
+
+		const diff = await Prisma.revolt_bots.findMany({
+			where: data,
+			include: {
+				owner: true,
+				comments: true,
+			},
+		});
+
+		return diff;
+	}
+
+	static async delete(botid: string) {
+		try {
+			await Prisma.revolt_bots.delete({
+				where: {
+					botid: botid,
+				},
+			});
+
+			return true;
+		} catch (err) {
+			return err;
+		}
+	}
+
+	static async comment(
+		BotID: string,
+		UserID: string,
+		Caption: string,
+		Image: string
+	) {
+		try {
+			await Prisma.revolt_comments.create({
 				data: {
 					botid: BotID,
 					commentid: crypto.randomUUID().toString(),
@@ -211,4 +341,4 @@ class Bots {
 }
 
 // Export Classes
-export { Users, Bots, Prisma };
+export { Users, Discord, Revolt, Prisma };

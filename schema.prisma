@@ -7,30 +7,25 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model botaudits {
-  id    Int         @id @unique @default(autoincrement())
-  botid String      @db.VarChar(255)
-  bot   discordbots @relation(fields: [botid], references: [botid])
+// Primary Tables
+model users {
+  username String? @db.VarChar(255)
+  userid   String  @id @unique @db.VarChar(255)
+  revoltid String? @unique @db.VarChar(255)
 
-  staffid String    @db.VarChar(255)
-  action  botaction
-  reason  String    @db.VarChar(255)
+  bio         String   @default("i exist now. yes.") @db.VarChar(255)
+  avatar      String   @default("/logo.png") @db.VarChar(255)
+  badges      String[]
+  staff_perms String[] @default([])
+
+  discord          discord_bots[]
+  discord_comments discord_comments[]
+
+  revolt          revolt_bots[]
+  revolt_comments revolt_comments[]
 }
 
-model botcomments {
-  commentid String @id @unique @db.VarChar(255)
-
-  creatorid String @db.VarChar(255)
-  user      users  @relation(fields: [creatorid], references: [userid])
-
-  bot   discordbots @relation(fields: [botid], references: [botid])
-  botid String      @db.VarChar(255)
-
-  caption String  @db.VarChar(255)
-  image   String? @db.VarChar(255)
-}
-
-model discordbots {
+model discord_bots {
   botid  String  @id @unique @db.VarChar(255)
   name   String  @db.VarChar(255)
   avatar String  @default("/logo.png") @db.VarChar(255)
@@ -47,29 +42,91 @@ model discordbots {
   claimedBy String?
 
   state     botstate
-  auditlogs botaudits[]
+  auditlogs discord_audits[]
 
   upvotes   String[]
   downvotes String[]
-  comments  botcomments[]
+  comments  discord_comments[]
 
   ownerid String
   owner   users  @relation(fields: [ownerid], references: [userid])
 }
 
-model users {
-  username String? @db.VarChar(255)
-  userid   String  @id @unique @db.VarChar(255)
+model revolt_bots {
+  botid  String  @id @unique @db.VarChar(255)
+  name   String  @db.VarChar(255)
+  avatar String  @default("/logo.png") @db.VarChar(255)
+  invite String? @unique
+  apiKey String? @unique
 
-  bio         String   @default("i exist now. yes.") @db.VarChar(255)
-  avatar      String   @default("/logo.png") @db.VarChar(255)
-  badges      String[]
-  staff_perms String[] @default([])
+  description     String
+  longdescription String
 
-  discordbots discordbots[]
-  botcomments botcomments[]
+  servers Int @default(0)
+  shards  Int @default(0)
+  users   Int @default(0)
+
+  claimedBy String?
+
+  state     botstate
+  auditlogs revolt_audits[]
+
+  upvotes   String[]
+  downvotes String[]
+  comments  revolt_comments[]
+
+  ownerid String
+  owner   users  @relation(fields: [ownerid], references: [revoltid])
 }
 
+// Foreign Tables
+model discord_audits {
+  id    Int          @id @unique @default(autoincrement())
+  botid String       @db.VarChar(255)
+  bot   discord_bots @relation(fields: [botid], references: [botid])
+
+  staffid String    @db.VarChar(255)
+  action  botaction
+  reason  String    @db.VarChar(255)
+}
+
+model discord_comments {
+  commentid String @id @unique @db.VarChar(255)
+
+  creatorid String @db.VarChar(255)
+  user      users  @relation(fields: [creatorid], references: [userid])
+
+  bot   discord_bots @relation(fields: [botid], references: [botid])
+  botid String       @db.VarChar(255)
+
+  caption String  @db.VarChar(255)
+  image   String? @db.VarChar(255)
+}
+
+model revolt_audits {
+  id    Int         @id @unique @default(autoincrement())
+  botid String      @db.VarChar(255)
+  bot   revolt_bots @relation(fields: [botid], references: [botid])
+
+  staffid String    @db.VarChar(255)
+  action  botaction
+  reason  String    @db.VarChar(255)
+}
+
+model revolt_comments {
+  commentid String @id @unique @db.VarChar(255)
+
+  creatorid String @db.VarChar(255)
+  user      users  @relation(fields: [creatorid], references: [revoltid])
+
+  bot   revolt_bots @relation(fields: [botid], references: [botid])
+  botid String      @db.VarChar(255)
+
+  caption String  @db.VarChar(255)
+  image   String? @db.VarChar(255)
+}
+
+// Enums
 enum botstate {
   CLAIMED
   APPROVED

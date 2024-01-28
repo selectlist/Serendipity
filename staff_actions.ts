@@ -15,31 +15,48 @@ const checkPerms = async (userid: string, perm: string) => {
 const logAction = async (
 	action: botaction,
 	reason: string,
+	platform: string,
 	userid: string,
 	botid: string
 ): Promise<boolean | Error> => {
 	try {
-		await database.Prisma.botaudits.create({
-			data: {
-				botid: botid,
-				staffid: userid,
-				action: action,
-				reason: reason,
-			},
-		});
-
-		const bot = await database.Bots.get({
-			botid: botid,
-		});
-
-		const staffMember = await database.Users.get({
-			userid: userid,
-		});
-
 		const webhookClient = new WebhookClient({
 			id: process.env.DISCORD_LOG_CHANNEL,
 			token: process.env.DISCORD_LOG_CHANNEL_TOKEN,
 		});
+
+		let bot = null;
+		const staffMember = await database.Users.get({
+			userid: userid,
+		});
+
+		if (platform === "Discord") {
+			bot = await database.Discord.get({
+				botid: botid,
+			});
+
+			await database.Prisma.discord_audits.create({
+				data: {
+					botid: botid,
+					staffid: userid,
+					action: action,
+					reason: reason,
+				},
+			});
+		} else if (platform === "Revolt") {
+			bot = await database.Revolt.get({
+				botid: botid,
+			});
+
+			await database.Prisma.revolt_audits.create({
+				data: {
+					botid: botid,
+					staffid: userid,
+					action: action,
+					reason: reason,
+				},
+			});
+		}
 
 		webhookClient.send({
 			content: `<@${bot.owner.userid}>`,
@@ -56,6 +73,11 @@ const logAction = async (
 						{
 							name: "Bot",
 							value: `${bot.name} [${botid}]`,
+							inline: true,
+						},
+						{
+							name: "Platform",
+							value: platform,
 							inline: true,
 						},
 						{
@@ -82,156 +104,326 @@ const logAction = async (
 	}
 };
 
-const Claim = async (
-	botid: string,
-	userid: string
-): Promise<boolean | Error> => {
-	const perms = await checkPerms(userid, "bots.claim");
-	if (!perms)
-		throw new Error(
-			"[Permission Denied] => You do not have enough permissions for this action."
-		);
-	else {
-		try {
-			let bot = await database.Prisma.discordbots.findUnique({
-				where: {
-					botid: botid,
-				},
-			});
-			bot.state = "CLAIMED";
-            bot.claimedBy = userid;
+// Discord Actions
+class Discord {
+	static async Claim(
+		botid: string,
+		userid: string
+	): Promise<boolean | Error> {
+		const perms = await checkPerms(userid, "bots.claim");
+		if (!perms)
+			throw new Error(
+				"[Permission Denied] => You do not have enough permissions for this action."
+			);
+		else {
+			try {
+				let bot = await database.Prisma.discord_bots.findUnique({
+					where: {
+						botid: botid,
+					},
+				});
+				bot.state = "CLAIMED";
+				bot.claimedBy = userid;
 
-			await database.Bots.update(botid, bot);
-			await logAction("CLAIMED", "Bot claimed.", userid, botid);
+				await database.Discord.update(botid, bot);
+				await logAction(
+					"CLAIMED",
+					"Bot claimed.",
+					"Discord",
+					userid,
+					botid
+				);
 
-			return true;
-		} catch (error) {
-			throw new Error(error);
+				return true;
+			} catch (error) {
+				throw new Error(error);
+			}
 		}
 	}
-};
 
-const Unclaim = async (
-	botid: string,
-	userid: string,
-	reason: string
-): Promise<boolean | Error> => {
-	const perms = await checkPerms(userid, "bots.unclaim");
-	if (!perms)
-		throw new Error(
-			"[Permission Denied] => You do not have enough permissions for this action."
-		);
-	else {
-		try {
-			let bot = await database.Prisma.discordbots.findUnique({
-				where: {
-					botid: botid,
-				},
-			});
-			bot.state = "PENDING";
-            bot.claimedBy = null;
+	static async Unclaim(
+		botid: string,
+		userid: string,
+		reason: string
+	): Promise<boolean | Error> {
+		const perms = await checkPerms(userid, "bots.unclaim");
+		if (!perms)
+			throw new Error(
+				"[Permission Denied] => You do not have enough permissions for this action."
+			);
+		else {
+			try {
+				let bot = await database.Prisma.discord_bots.findUnique({
+					where: {
+						botid: botid,
+					},
+				});
+				bot.state = "PENDING";
+				bot.claimedBy = null;
 
-			await database.Bots.update(botid, bot);
-			await logAction("UNCLAIMED", reason, userid, botid);
+				await database.Discord.update(botid, bot);
+				await logAction("UNCLAIMED", reason, "Discord", userid, botid);
 
-			return true;
-		} catch (error) {
-			throw new Error(error);
+				return true;
+			} catch (error) {
+				throw new Error(error);
+			}
 		}
 	}
-};
 
-const Approve = async (
-	botid: string,
-	userid: string,
-	reason: string
-): Promise<boolean | Error> => {
-	const perms = await checkPerms(userid, "bots.approve");
+	static async Approve(
+		botid: string,
+		userid: string,
+		reason: string
+	): Promise<boolean | Error> {
+		const perms = await checkPerms(userid, "bots.approve");
 
-	if (!perms)
-		throw new Error(
-			"[Permission Denied] => You do not have enough permissions for this action."
-		);
-	else {
-		try {
-			let bot = await database.Prisma.discordbots.findUnique({
-				where: {
-					botid: botid,
-				},
-			});
-			bot.state = "APPROVED";
-            bot.claimedBy = null;
+		if (!perms)
+			throw new Error(
+				"[Permission Denied] => You do not have enough permissions for this action."
+			);
+		else {
+			try {
+				let bot = await database.Prisma.discord_bots.findUnique({
+					where: {
+						botid: botid,
+					},
+				});
+				bot.state = "APPROVED";
+				bot.claimedBy = null;
 
-			await database.Bots.update(botid, bot);
-			await logAction("APPROVED", reason, userid, botid);
+				await database.Discord.update(botid, bot);
+				await logAction("APPROVED", reason, "Discord", userid, botid);
 
-			return true;
-		} catch (error) {
-			throw new Error(error);
+				return true;
+			} catch (error) {
+				throw new Error(error);
+			}
 		}
 	}
-};
 
-const Deny = async (
-	botid: string,
-	userid: string,
-	reason: string
-): Promise<boolean | Error> => {
-	const perms = await checkPerms(userid, "bots.deny");
+	static async Deny(
+		botid: string,
+		userid: string,
+		reason: string
+	): Promise<boolean | Error> {
+		const perms = await checkPerms(userid, "bots.deny");
 
-	if (!perms)
-		throw new Error(
-			"[Permission Denied] => You do not have enough permissions for this action."
-		);
-	else {
-		try {
-			let bot = await database.Prisma.discordbots.findUnique({
-				where: {
-					botid: botid,
-				},
-			});
-			bot.state = "DENIED";
-            bot.claimedBy = null;
+		if (!perms)
+			throw new Error(
+				"[Permission Denied] => You do not have enough permissions for this action."
+			);
+		else {
+			try {
+				let bot = await database.Prisma.discord_bots.findUnique({
+					where: {
+						botid: botid,
+					},
+				});
+				bot.state = "DENIED";
+				bot.claimedBy = null;
 
-			await database.Bots.update(botid, bot);
-			await logAction("DENIED", reason, userid, botid);
+				await database.Discord.update(botid, bot);
+				await logAction("DENIED", reason, "Discord", userid, botid);
 
-			return true;
-		} catch (error) {
-			throw new Error(error);
+				return true;
+			} catch (error) {
+				throw new Error(error);
+			}
 		}
 	}
-};
 
-const Ban = async (
-	botid: string,
-	userid: string,
-	reason: string
-): Promise<boolean | Error> => {
-	const perms = await checkPerms(userid, "bots.ban");
+	static async Ban(
+		botid: string,
+		userid: string,
+		reason: string
+	): Promise<boolean | Error> {
+		const perms = await checkPerms(userid, "bots.ban");
 
-	if (!perms)
-		throw new Error(
-			"[Permission Denied] => You do not have enough permissions for this action."
-		);
-	else {
-		try {
-			let bot = await database.Prisma.discordbots.findUnique({
-				where: {
-					botid: botid,
-				},
-			});
-			bot.state = "BANNED";
-            bot.claimedBy = null;
-            
-			await database.Bots.update(botid, bot);
-			await logAction("BANNED", reason, userid, botid);
+		if (!perms)
+			throw new Error(
+				"[Permission Denied] => You do not have enough permissions for this action."
+			);
+		else {
+			try {
+				let bot = await database.Prisma.discord_bots.findUnique({
+					where: {
+						botid: botid,
+					},
+				});
+				bot.state = "BANNED";
+				bot.claimedBy = null;
 
-			return true;
-		} catch (error) {
-			throw new Error(error);
+				await database.Discord.update(botid, bot);
+				await logAction("BANNED", reason, "Discord", userid, botid);
+
+				return true;
+			} catch (error) {
+				throw new Error(error);
+			}
 		}
 	}
-};
+}
 
-export { Claim, Unclaim, Approve, Deny, Ban };
+// Revolt Actions
+class Revolt {
+	static async Claim(
+		botid: string,
+		userid: string
+	): Promise<boolean | Error> {
+		const perms = await checkPerms(userid, "bots.claim");
+		if (!perms)
+			throw new Error(
+				"[Permission Denied] => You do not have enough permissions for this action."
+			);
+		else {
+			try {
+				let bot = await database.Prisma.revolt_bots.findUnique({
+					where: {
+						botid: botid,
+					},
+				});
+				bot.state = "CLAIMED";
+				bot.claimedBy = userid;
+
+				await database.Revolt.update(botid, bot);
+				await logAction(
+					"CLAIMED",
+					"Bot claimed.",
+					"Revolt",
+					userid,
+					botid
+				);
+
+				return true;
+			} catch (error) {
+				throw new Error(error);
+			}
+		}
+	}
+
+	static async Unclaim(
+		botid: string,
+		userid: string,
+		reason: string
+	): Promise<boolean | Error> {
+		const perms = await checkPerms(userid, "bots.unclaim");
+		if (!perms)
+			throw new Error(
+				"[Permission Denied] => You do not have enough permissions for this action."
+			);
+		else {
+			try {
+				let bot = await database.Prisma.revolt_bots.findUnique({
+					where: {
+						botid: botid,
+					},
+				});
+				bot.state = "PENDING";
+				bot.claimedBy = null;
+
+				await database.Revolt.update(botid, bot);
+				await logAction("UNCLAIMED", reason, "Revolt", userid, botid);
+
+				return true;
+			} catch (error) {
+				throw new Error(error);
+			}
+		}
+	}
+
+	static async Approve(
+		botid: string,
+		userid: string,
+		reason: string
+	): Promise<boolean | Error> {
+		const perms = await checkPerms(userid, "bots.approve");
+
+		if (!perms)
+			throw new Error(
+				"[Permission Denied] => You do not have enough permissions for this action."
+			);
+		else {
+			try {
+				let bot = await database.Prisma.revolt_bots.findUnique({
+					where: {
+						botid: botid,
+					},
+				});
+				bot.state = "APPROVED";
+				bot.claimedBy = null;
+
+				await database.Revolt.update(botid, bot);
+				await logAction("APPROVED", reason, "Revolt", userid, botid);
+
+				return true;
+			} catch (error) {
+				throw new Error(error);
+			}
+		}
+	}
+
+	static async Deny(
+		botid: string,
+		userid: string,
+		reason: string
+	): Promise<boolean | Error> {
+		const perms = await checkPerms(userid, "bots.deny");
+
+		if (!perms)
+			throw new Error(
+				"[Permission Denied] => You do not have enough permissions for this action."
+			);
+		else {
+			try {
+				let bot = await database.Prisma.revolt_bots.findUnique({
+					where: {
+						botid: botid,
+					},
+				});
+				bot.state = "DENIED";
+				bot.claimedBy = null;
+
+				await database.Revolt.update(botid, bot);
+				await logAction("DENIED", reason, "Revolt", userid, botid);
+
+				return true;
+			} catch (error) {
+				throw new Error(error);
+			}
+		}
+	}
+
+	static async Ban(
+		botid: string,
+		userid: string,
+		reason: string
+	): Promise<boolean | Error> {
+		const perms = await checkPerms(userid, "bots.ban");
+
+		if (!perms)
+			throw new Error(
+				"[Permission Denied] => You do not have enough permissions for this action."
+			);
+		else {
+			try {
+				let bot = await database.Prisma.revolt_bots.findUnique({
+					where: {
+						botid: botid,
+					},
+				});
+				bot.state = "BANNED";
+				bot.claimedBy = null;
+
+				await database.Revolt.update(botid, bot);
+				await logAction("BANNED", reason, "Revolt", userid, botid);
+
+				return true;
+			} catch (error) {
+				throw new Error(error);
+			}
+		}
+	}
+}
+
+export { Discord, Revolt };
