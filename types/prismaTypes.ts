@@ -75,6 +75,14 @@ export interface revolt_bots {
 	owner: users;
 }
 
+export interface tokens {
+	id: string;
+	userid: string;
+	token: string;
+	agent?: string;
+	createdAt: Date;
+}
+
 export interface discord_audits {
 	id: number;
 	botid: string;

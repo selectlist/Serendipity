@@ -79,6 +79,16 @@ model revolt_bots {
   owner   users  @relation(fields: [ownerid], references: [revoltid])
 }
 
+model tokens {
+    id String @default(uuid()) @unique @id
+    userid String
+
+    token String @unique
+    agent String?
+
+    createdAt DateTime @default(now())
+}
+
 // Foreign Tables
 model discord_audits {
   id    Int          @id @unique @default(autoincrement())

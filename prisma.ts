@@ -1,5 +1,11 @@
 // Modules
-import { PrismaClient, discord_bots, revolt_bots, users } from "@prisma/client";
+import {
+	PrismaClient,
+	discord_bots,
+	revolt_bots,
+	users,
+	tokens,
+} from "@prisma/client";
 import { getDiscordUser, getRevoltUser } from "./dovewing.js";
 const Prisma = new PrismaClient();
 
@@ -94,6 +100,42 @@ class Users {
 			return true;
 		} catch (err) {
 			return err;
+		}
+	}
+}
+
+// Tokens
+class Tokens {
+	static async create(data: tokens) {
+		try {
+			await Prisma.tokens.create({
+				data: data,
+			});
+
+			return true;
+		} catch (error) {
+			return error;
+		}
+	}
+
+	static async get(data: any) {
+		const doc = await Prisma.tokens.findUnique({
+			where: data,
+		});
+
+		if (!doc) return null;
+		else return doc;
+	}
+
+	static async delete(data: tokens) {
+		try {
+			await Prisma.tokens.delete({
+				where: data,
+			});
+
+			return true;
+		} catch (error) {
+			return error;
 		}
 	}
 }
@@ -341,4 +383,4 @@ class Revolt {
 }
 
 // Export Classes
-export { Users, Discord, Revolt, Prisma };
+export { Users, Discord, Revolt, Tokens, Prisma };
