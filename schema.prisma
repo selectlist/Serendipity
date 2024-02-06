@@ -32,8 +32,7 @@ model discord_bots {
   name   String  @db.VarChar(255)
   avatar String  @default("/logo.png") @db.VarChar(255)
   invite String? @unique
-  apiKey String? @unique
-
+  
   description     String
   longdescription String
 
@@ -59,7 +58,6 @@ model revolt_bots {
   name   String  @db.VarChar(255)
   avatar String  @default("/logo.png") @db.VarChar(255)
   invite String? @unique
-  apiKey String? @unique
 
   description     String
   longdescription String

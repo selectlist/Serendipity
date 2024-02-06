@@ -49,15 +49,15 @@ class Users {
 
 				discord_comments: false,
 				revolt_comments: false,
-                applications: false
+				applications: false,
 			},
 		});
 
-		const cache = await getDiscordUser(doc.userid);
+		const cache = await getDiscordUser(doc.userid, false);
 
 		if (!doc) return null;
 		else {
-			doc.discord.map(async (p) => await getDiscordUser(p.botid));
+			doc.discord.map(async (p) => await getDiscordUser(p.botid, true));
 
 			if (cache === true) return doc;
 			else {
@@ -69,6 +69,7 @@ class Users {
 
 						discord_comments: false,
 						revolt_comments: false,
+						applications: false,
 					},
 				});
 
@@ -86,7 +87,7 @@ class Users {
 
 				discord_comments: false,
 				revolt_comments: false,
-                applications: false
+				applications: false,
 			},
 		});
 
@@ -184,8 +185,8 @@ class Discord {
 
 		if (!doc) return null;
 		else {
-			const cache = await getDiscordUser(doc.botid);
-			await getDiscordUser(doc.owner.userid);
+			const cache = await getDiscordUser(doc.botid, true);
+			await getDiscordUser(doc.owner.userid, false);
 
 			if (cache === true) return doc;
 			else {
@@ -212,8 +213,8 @@ class Discord {
 		});
 
 		docs.map(async (p) => {
-			await getDiscordUser(p.botid);
-			await getDiscordUser(p.owner.userid);
+			await getDiscordUser(p.botid, true);
+			await getDiscordUser(p.owner.userid, false);
 		});
 
 		const diff = await Prisma.discord_bots.findMany({
@@ -305,8 +306,8 @@ class Revolt {
 
 		if (!doc) return null;
 		else {
-			const cache = await getRevoltUser(doc.botid);
-			await getDiscordUser(doc.owner.userid);
+			const cache = await getRevoltUser(doc.botid, true);
+			await getDiscordUser(doc.owner.userid, false);
 
 			if (cache === true) return doc;
 			else {
@@ -333,8 +334,8 @@ class Revolt {
 		});
 
 		docs.map(async (p) => {
-			await getRevoltUser(p.botid);
-			await getDiscordUser(p.owner.userid);
+			await getRevoltUser(p.botid, true);
+			await getDiscordUser(p.owner.userid, false);
 		});
 
 		const diff = await Prisma.revolt_bots.findMany({
