@@ -7,6 +7,7 @@ import type { RESTGetAPIUserResult, Snowflake } from "discord-api-types/v9";
 import { Client } from "revolt.js";
 import * as dotenv from "dotenv";
 import { info } from "../logger.js";
+import { EmbedBuilder, WebhookClient } from "discord.js";
 
 // Configure dotenv
 dotenv.config();
@@ -48,8 +49,52 @@ const getCache = async (key: string): Promise<any> => {
 	}
 };
 
+// Webhook Notices
+const botDeletionNotice = async (
+	name: string,
+	botid: string,
+	platform: string
+) => {
+	const webhookClient = new WebhookClient({
+		id: process.env.DISCORD_LOG_CHANNEL,
+		token: process.env.DISCORD_LOG_CHANNEL_TOKEN,
+	});
+
+	webhookClient.send({
+		embeds: [
+			new EmbedBuilder()
+				.setTitle(`Bot Deleted`)
+				.setColor("Random")
+				.addFields(
+					{
+						name: "Bot",
+						value: `${name} [${botid}]`,
+						inline: true,
+					},
+					{
+						name: "Platform",
+						value: platform,
+						inline: true,
+					},
+					{
+						name: "Reason",
+						value: "**Automatic Action**\nBot has been deleted from platform.",
+						inline: true,
+					}
+				)
+				.setFooter({
+					text: `Thank you for using Select List!`,
+					iconURL: "https://select-list.xyz/logo.png",
+				}),
+		],
+	});
+};
+
 // Dovewing
-const getDiscordUser = async (userid: Snowflake): Promise<boolean> => {
+const getDiscordUser = async (
+	userid: Snowflake,
+	bot: boolean
+): Promise<boolean> => {
 	const cache = await getCache(userid);
 
 	if (cache) return true;
@@ -57,6 +102,17 @@ const getDiscordUser = async (userid: Snowflake): Promise<boolean> => {
 		const apiUserData = (await rest.get(
 			Routes.user(userid)
 		)) as RESTGetAPIUserResult;
+
+		if (!apiUserData) {
+			if (bot) {
+				const botData = await database.Discord.get({
+					botid: userid,
+				});
+
+				await database.Discord.delete(userid);
+				await botDeletionNotice(botData.name, userid, "Discord");
+			}
+		}
 
 		if (apiUserData.bot) {
 			let botData = await database.Prisma.discord_bots.findUnique({
@@ -101,12 +157,26 @@ const getDiscordUser = async (userid: Snowflake): Promise<boolean> => {
 	}
 };
 
-const getRevoltUser = async (userid: string): Promise<boolean> => {
+const getRevoltUser = async (
+	userid: string,
+	bot: boolean
+): Promise<boolean> => {
 	const cache = await getCache(userid);
 
 	if (cache) return true;
 	else {
 		let d = await revoltClient.users.fetch(userid).then(async (p) => {
+			if (!p) {
+				if (bot) {
+					const botData = await database.Revolt.get({
+						botid: userid,
+					});
+
+					await database.Revolt.delete(userid);
+					await botDeletionNotice(botData.name, userid, "Revolt");
+				}
+			}
+
 			if (p.bot) {
 				let botData = await database.Prisma.revolt_bots.findUnique({
 					where: {

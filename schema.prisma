@@ -23,6 +23,8 @@ model users {
 
   revolt          revolt_bots[]
   revolt_comments revolt_comments[]
+
+  applications applications[]
 }
 
 model discord_bots {
@@ -30,8 +32,7 @@ model discord_bots {
   name   String  @db.VarChar(255)
   avatar String  @default("/logo.png") @db.VarChar(255)
   invite String? @unique
-  apiKey String? @unique
-
+  
   description     String
   longdescription String
 
@@ -57,7 +58,6 @@ model revolt_bots {
   name   String  @db.VarChar(255)
   avatar String  @default("/logo.png") @db.VarChar(255)
   invite String? @unique
-  apiKey String? @unique
 
   description     String
   longdescription String
@@ -90,6 +90,19 @@ model tokens {
 }
 
 // Foreign Tables
+model applications {
+  creatorid String @db.VarChar(255)
+  owner     users  @relation(fields: [creatorid], references: [userid])
+
+  name String @db.VarChar(255)
+  logo String @default("/logo.png") @db.VarChar(255)
+
+  token  String  @unique @db.VarChar(255)
+  active Boolean @default(true)
+
+  permissions String[] @default(["global.*"])
+}
+
 model discord_audits {
   id    Int          @id @unique @default(autoincrement())
   botid String       @db.VarChar(255)

@@ -31,6 +31,7 @@ export interface users {
 	discord_comments: discord_comments[];
 	revolt: revolt_bots[];
 	revolt_comments: revolt_comments[];
+	applications: applications[];
 }
 
 export interface discord_bots {
@@ -81,6 +82,16 @@ export interface tokens {
 	token: string;
 	agent?: string;
 	createdAt: Date;
+}
+
+export interface applications {
+	creatorid: string;
+	owner: users;
+	name: string;
+	logo: string;
+	token: string;
+	active: boolean;
+	permissions: string[];
 }
 
 export interface discord_audits {
