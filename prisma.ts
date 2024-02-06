@@ -7,6 +7,8 @@ import {
 	tokens,
 } from "@prisma/client";
 import { getDiscordUser, getRevoltUser } from "./dovewing.js";
+import * as crypto from "crypto";
+
 const Prisma = new PrismaClient();
 
 // Users
@@ -47,6 +49,7 @@ class Users {
 
 				discord_comments: false,
 				revolt_comments: false,
+                applications: false
 			},
 		});
 
@@ -83,6 +86,7 @@ class Users {
 
 				discord_comments: false,
 				revolt_comments: false,
+                applications: false
 			},
 		});
 
@@ -382,5 +386,95 @@ class Revolt {
 	}
 }
 
+// Developer Applications
+class Applications {
+	static async createApp(creator_id: string, name: string, logo: string) {
+		try {
+			const token: string = crypto
+				.createHash("sha256")
+				.update(
+					`${crypto.randomUUID()}_${crypto.randomUUID()}`.replace(
+						/-/g,
+						""
+					)
+				)
+				.digest("hex");
+
+			await Prisma.applications.create({
+				data: {
+					creatorid: creator_id,
+					name: name,
+					logo: logo,
+					token: token,
+					active: true,
+					permissions: ["global.*"],
+				},
+			});
+
+			return token;
+		} catch (err) {
+			return err;
+		}
+	}
+
+	static async updateApp(token: string, data: any) {
+		try {
+			await Prisma.applications.update({
+				data: data,
+				where: {
+					token: token,
+				},
+			});
+
+			return true;
+		} catch (err) {
+			return err;
+		}
+	}
+
+	static async get(token: string) {
+		const tokenData = await Prisma.applications.findUnique({
+			where: {
+				token: token,
+			},
+			include: {
+				owner: true,
+			},
+		});
+
+		if (tokenData) return tokenData;
+		else return null;
+	}
+
+	static async getAllApplications(creatorid: string) {
+		try {
+			const doc = await Prisma.applications.findMany({
+				where: {
+					creatorid: creatorid,
+				},
+				include: {
+					owner: true,
+				},
+			});
+
+			return doc;
+		} catch (error) {
+			return error;
+		}
+	}
+
+	static async delete(data: any) {
+		try {
+			await Prisma.applications.delete({
+				where: data,
+			});
+
+			return true;
+		} catch (err) {
+			return err;
+		}
+	}
+}
+
 // Export Classes
-export { Users, Discord, Revolt, Tokens, Prisma };
+export { Users, Discord, Revolt, Applications, Tokens, Prisma };
