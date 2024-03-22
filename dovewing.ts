@@ -103,14 +103,17 @@ const getDiscordUser = async (
 			Routes.user(userid)
 		)) as RESTGetAPIUserResult;
 
-		if (!apiUserData) {
+		if (apiUserData) {
 			if (bot) {
 				const botData = await database.Discord.get({
 					botid: userid,
 				});
 
+				
+			if (apiUserData.username.startsWith("deleted_user")) {
 				await database.Discord.delete(userid);
 				await botDeletionNotice(botData.name, userid, "Discord");
+			}
 			}
 		}
 
