@@ -38,8 +38,8 @@ export interface discord_bots {
 	botid: string;
 	name: string;
 	avatar: string;
+	tags: string[];
 	invite?: string;
-	apiKey?: string;
 	description: string;
 	longdescription: string;
 	servers: number;
@@ -53,14 +53,15 @@ export interface discord_bots {
 	comments: discord_comments[];
 	ownerid: string;
 	owner: users;
+	additional_owners: string[];
 }
 
 export interface revolt_bots {
 	botid: string;
 	name: string;
 	avatar: string;
+	tags: string[];
 	invite?: string;
-	apiKey?: string;
 	description: string;
 	longdescription: string;
 	servers: number;
@@ -74,6 +75,7 @@ export interface revolt_bots {
 	comments: revolt_comments[];
 	ownerid: string;
 	owner: users;
+	additional_owners: string[];
 }
 
 export interface tokens {

@@ -96,6 +96,54 @@ class Users {
 
 	static async delete(userid: string) {
 		try {
+			await Prisma.discord_comments.deleteMany({
+				where: {
+					creatorid: userid,
+				},
+			});
+
+			await Prisma.discord_audits.deleteMany({
+				where: {
+					staffid: userid,
+				},
+			});
+
+			await Prisma.revolt_comments.deleteMany({
+				where: {
+					creatorid: userid,
+				},
+			});
+
+			await Prisma.revolt_audits.deleteMany({
+				where: {
+					staffid: userid,
+				},
+			});
+
+			await Prisma.discord_bots.deleteMany({
+				where: {
+					ownerid: userid,
+				},
+			});
+
+			await Prisma.revolt_bots.deleteMany({
+				where: {
+					ownerid: userid,
+				},
+			});
+
+			await Prisma.tokens.deleteMany({
+				where: {
+					userid: userid,
+				},
+			});
+
+			await Prisma.applications.deleteMany({
+				where: {
+					creatorid: userid,
+				},
+			});
+
 			await Prisma.users.delete({
 				where: {
 					userid: userid,
@@ -230,6 +278,18 @@ class Discord {
 
 	static async delete(botid: string) {
 		try {
+			await Prisma.discord_comments.deleteMany({
+				where: {
+					botid: botid,
+				},
+			});
+
+			await Prisma.discord_audits.deleteMany({
+				where: {
+					botid: botid,
+				},
+			});
+
 			await Prisma.discord_bots.delete({
 				where: {
 					botid: botid,
@@ -351,6 +411,18 @@ class Revolt {
 
 	static async delete(botid: string) {
 		try {
+			await Prisma.revolt_comments.deleteMany({
+				where: {
+					botid: botid,
+				},
+			});
+
+			await Prisma.revolt_audits.deleteMany({
+				where: {
+					botid: botid,
+				},
+			});
+
 			await Prisma.revolt_bots.delete({
 				where: {
 					botid: botid,

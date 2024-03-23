@@ -3,11 +3,11 @@ import * as redis from "redis";
 import * as database from "./prisma.js";
 import { REST } from "@discordjs/rest";
 import { Routes } from "discord-api-types/v9";
-import type { RESTGetAPIUserResult, Snowflake } from "discord-api-types/v9";
+import type { Snowflake } from "discord-api-types/v9";
 import { Client } from "revolt.js";
 import * as dotenv from "dotenv";
 import { info } from "../logger.js";
-import { EmbedBuilder, WebhookClient } from "discord.js";
+import { APIUser, EmbedBuilder, WebhookClient } from "discord.js";
 
 // Configure dotenv
 dotenv.config();
@@ -32,7 +32,7 @@ revoltClient.on("ready", async () => info("Revolt (Dovewing)", "Ready!"));
 // Cache Manager
 const setCache = async (key: string, value: any): Promise<boolean> => {
 	try {
-		await client.setEx(key, 24 * 60 * 60, value);
+		await client.setEx(key, 8 * 60 * 60, value);
 		return true;
 	} catch (error) {
 		console.error("Error setting cache:", error);
@@ -99,20 +99,7 @@ const getDiscordUser = async (
 
 	if (cache) return true;
 	else {
-		const apiUserData = (await rest.get(
-			Routes.user(userid)
-		)) as RESTGetAPIUserResult;
-
-		if (!apiUserData) {
-			if (bot) {
-				const botData = await database.Discord.get({
-					botid: userid,
-				});
-
-				await database.Discord.delete(userid);
-				await botDeletionNotice(botData.name, userid, "Discord");
-			}
-		}
+		const apiUserData = (await rest.get(Routes.user(userid))) as APIUser;
 
 		if (apiUserData.bot) {
 			let botData = await database.Prisma.discord_bots.findUnique({
@@ -125,8 +112,22 @@ const getDiscordUser = async (
 				},
 			});
 
+			if (apiUserData.username.startsWith("deleted_user")) {
+				if (bot) {
+					if (botData) {
+						await database.Discord.delete(userid);
+						await botDeletionNotice(
+							botData.name,
+							userid,
+							"Discord"
+						);
+						return null;
+					}
+				}
+			}
+
 			botData.name = apiUserData.username;
-			botData.avatar = `https://cdn.discordapp.com/avatars/${userid}/${apiUserData.avatar}.png`;
+			botData.avatar = `https://cdn.discordapp.com/avatars/${userid}/${apiUserData.avatar}.webp`;
 
 			await database.Discord.update(userid, botData);
 			await setCache(userid, JSON.stringify(botData));
@@ -143,11 +144,21 @@ const getDiscordUser = async (
 
 					revolt: false,
 					revolt_comments: false,
+					applications: false,
 				},
 			});
 
+			if (apiUserData.username.startsWith("Deleted User")) {
+				if (!bot) {
+					if (userData) {
+						await database.Users.delete(userid);
+						return null;
+					}
+				}
+			}
+
 			userData.username = apiUserData.username;
-			userData.avatar = `https://cdn.discordapp.com/avatars/${userid}/${apiUserData.avatar}.png`;
+			userData.avatar = `https://cdn.discordapp.com/avatars/${userid}/${apiUserData.avatar}.webp`;
 
 			await database.Users.update(userid, userData);
 			await setCache(userid, JSON.stringify(userData));
@@ -172,8 +183,11 @@ const getRevoltUser = async (
 						botid: userid,
 					});
 
-					await database.Revolt.delete(userid);
-					await botDeletionNotice(botData.name, userid, "Revolt");
+					if (botData) {
+						await database.Revolt.delete(userid);
+						await botDeletionNotice(botData.name, userid, "Revolt");
+						return null;
+					}
 				}
 			}
 

@@ -371,4 +371,4 @@ const Query = async (action: string, data: any): Promise<boolean | Error> => {
 	}
 };
 
-export { Query };
+export { Query, availableEntities };
