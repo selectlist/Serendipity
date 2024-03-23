@@ -253,6 +253,52 @@ const availableEntities: {
 				},
 			},
 			{
+				name: "unapprove",
+				description:
+					"Unapprove bot for further review. Sends it right back to the queue!",
+				params: [
+					{
+						name: "bot_id",
+						description: "What is the Bot ID?",
+					},
+					{
+						name: "staff_id",
+						description: "What is the Staff Member ID?",
+					},
+					{
+						name: "platform",
+						description: "Discord or Revolt?",
+					},
+					{
+						name: "reason",
+						description: "Why are you unapproving this entity?",
+					},
+				],
+				permissionRequired: "bots.unapprove",
+				execute: async (data: any) => {
+					let bot = await database.Prisma[
+						`${data.platform.toLowerCase()}_bots`
+					].findUnique({
+						where: {
+							botid: data.bot_id,
+						},
+					});
+					bot.state = "APPROVED";
+					bot.claimedBy = null;
+
+					await database[data.platform].update(data.bot_id, bot);
+					await logAction(
+						"APPROVED",
+						data.reason,
+						data.platform,
+						data.staff_id,
+						data.bot_id
+					);
+
+					return true;
+				},
+			},
+			{
 				name: "deny",
 				description: "Deny bot.",
 				params: [
@@ -342,6 +388,51 @@ const availableEntities: {
 					return true;
 				},
 			},
+			{
+				name: "unban",
+				description: "Unban bot.",
+				params: [
+					{
+						name: "bot_id",
+						description: "What is the Bot ID?",
+					},
+					{
+						name: "staff_id",
+						description: "What is the Staff Member ID?",
+					},
+					{
+						name: "platform",
+						description: "Discord or Revolt?",
+					},
+					{
+						name: "reason",
+						description: "Why are you unbanning this entity?",
+					},
+				],
+				permissionRequired: "bots.unban",
+				execute: async (data) => {
+					let bot = await database.Prisma[
+						`${data.platform.toLowerCase()}_bots`
+					].findUnique({
+						where: {
+							botid: data.bot_id,
+						},
+					});
+					bot.state = "PENDING";
+					bot.claimedBy = null;
+
+					await database[data.platform].update(data.bot_id, bot);
+					await logAction(
+						"BANNED",
+						data.reason,
+						data.platform,
+						data.staff_id,
+						data.bot_id
+					);
+
+					return true;
+				},
+			},
 		],
 	},
 ];
@@ -358,10 +449,7 @@ const Query = async (action: string, data: any): Promise<boolean | Error> => {
 		if (checkPerms(data.staff_id, entityAction.permissionRequired)) {
 			const ActionParams = entityAction.params.map((p) => p.name);
 
-			if (
-				JSON.stringify(Object.keys(data)) ===
-				JSON.stringify(ActionParams)
-			)
+			if (Object.keys(data).every((key) => ActionParams.includes(key)))
 				return await entityAction?.execute(data);
 			else return new Error("[RPC Error] => Invalid Parameters.");
 		} else
